@@ -79,7 +79,7 @@ void bootloader_read_from_host(void);
 
 void bootloader_jump_to_user_application(void);
 void printMsg(char* msg,...);
-void delay(uint16_t ms);
+void delayS(uint16_t ms);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -98,7 +98,7 @@ void delay(uint16_t ms);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define FLASH_SECTOR_ADDRESS 0x08008000U
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

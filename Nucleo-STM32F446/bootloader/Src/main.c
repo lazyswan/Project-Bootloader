@@ -74,14 +74,14 @@ int main(void)
 			//HAL_UART_Transmit(&huart2,(uint8_t*)buttonNotPress, sizeof(buttonPress), HAL_MAX_DELAY);
 			//char *buttonPress="BUTTON PRESSED\n";
 			printMsg("Button Pressed\n");
-			delay(1000);
+			delayS(1000);
 			bootloader_read_from_host();
 		}
 		else{
 			
 			//char buttonNotPress[]="BUTTON NOT PRESSED\n";
 			printMsg("Button Not Pressed\n");
-			delay(1000);
+			delayS(1000);
 			//HAL_UART_Transmit(&huart2,(uint8_t*)buttonNotPress, sizeof(buttonNotPress), HAL_MAX_DELAY);
 			bootloader_jump_to_user_application();
 			
@@ -112,7 +112,7 @@ char str[80];
 	
 	
 }
-void delay(uint16_t ms){
+void delayS(uint16_t ms){
 	uint32_t currentTick=HAL_GetTick();
 		// BUSY WAITING
 			while(HAL_GetTick()<=currentTick+ms);
@@ -122,6 +122,15 @@ void bootloader_read_from_host(void){
 }
 
 void bootloader_jump_to_user_application(void){
+	void (*app_reset_handler)(void);//pointer to hold the reset handler
+	//first address @ 0x0800_8000 hold MSP
+	uint32_t mspVal= *(volatile uint32_t*)FLASH_SECTOR_ADDRESS;
+	__set_MSP(mspVal);
+	//second address is address of reset handler
+	uint32_t resetHandler= *(volatile uint32_t*)(FLASH_SECTOR_ADDRESS+4);
+	app_reset_handler = (void *)resetHandler;
+	//Jumping to User Application;
+	app_reset_handler();
 	
 }
 
