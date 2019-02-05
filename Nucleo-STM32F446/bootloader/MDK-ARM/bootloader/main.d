@@ -1,4 +1,7 @@
 bootloader\main.o: ../Src/main.c
+bootloader\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
+bootloader\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+bootloader\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 bootloader\main.o: ../Inc/main.h
 bootloader\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
 bootloader\main.o: ../Inc/stm32f4xx_hal_conf.h
@@ -7,7 +10,6 @@ bootloader\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h
 bootloader\main.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
 bootloader\main.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h
 bootloader\main.o: ../Drivers/CMSIS/Include/core_cm4.h
-bootloader\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 bootloader\main.o: ../Drivers/CMSIS/Include/core_cmInstr.h
 bootloader\main.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
 bootloader\main.o: ../Drivers/CMSIS/Include/core_cmFunc.h

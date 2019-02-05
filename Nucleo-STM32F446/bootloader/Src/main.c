@@ -38,100 +38,91 @@
   */
 /* USER CODE END Header */
 
+#include <stdarg.h>
+#include <string.h>
+#include <stdint.h>
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
 CRC_HandleTypeDef hcrc;
 
 UART_HandleTypeDef huart2;
 
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CRC_Init(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 char msg[]="Message printed over UART2\n";
-/* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_CRC_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+ 
   while (1)
   {
-    /* USER CODE END WHILE */
-//	HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+		//HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+		if(HAL_GPIO_ReadPin(B1_GPIO_Port,B1_Pin)==GPIO_PIN_RESET){
+			//HAL_UART_Transmit(&huart2,(uint8_t*)buttonNotPress, sizeof(buttonPress), HAL_MAX_DELAY);
+			//char *buttonPress="BUTTON PRESSED\n";
+			printMsg("Button Pressed\n");
+			delay(1000);
+			bootloader_read_from_host();
+		}
+		else{
+			
+			//char buttonNotPress[]="BUTTON NOT PRESSED\n";
+			printMsg("Button Not Pressed\n");
+			delay(1000);
+			//HAL_UART_Transmit(&huart2,(uint8_t*)buttonNotPress, sizeof(buttonNotPress), HAL_MAX_DELAY);
+			bootloader_jump_to_user_application();
+			
+		}
+    
+/*
+		//	HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
 		HAL_UART_Transmit(&huart2,(uint8_t*)msg, sizeof(msg), HAL_MAX_DELAY);
-//	DELAY
+		//	DELAY
 		uint32_t currentTick=HAL_GetTick();
-//BUSY WAITING
+		// BUSY WAITING
 		while(HAL_GetTick()<=currentTick+1000);
-    /* USER CODE BEGIN 3 */
+		
+*/
+
   }
-  /* USER CODE END 3 */
+ 
+}
+void printMsg(char* msg,...){
+char str[80];
+
+	/*Extract the the argument list using VA apis */
+	va_list args;
+	va_start(args, msg);
+	vsprintf(str, msg,args);
+	HAL_UART_Transmit(&huart2,(uint8_t *)str, strlen(str),HAL_MAX_DELAY);
+	va_end(args);
+	
+	
+}
+void delay(uint16_t ms){
+	uint32_t currentTick=HAL_GetTick();
+		// BUSY WAITING
+			while(HAL_GetTick()<=currentTick+ms);
+}
+void bootloader_read_from_host(void){
+	
+}
+
+void bootloader_jump_to_user_application(void){
+	
 }
 
 /**

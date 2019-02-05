@@ -75,6 +75,11 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+void bootloader_read_from_host(void);
+
+void bootloader_jump_to_user_application(void);
+void printMsg(char* msg,...);
+void delay(uint16_t ms);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
