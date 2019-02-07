@@ -28,10 +28,6 @@ Project File Date:  02/07/2019
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'bootloader'
 compiling main.c...
-../Inc/main.h(82): warning:  #1295-D: Deprecated declaration getHelpHandler - give arg types
-  void getHelpHandler();
-../Inc/main.h(83): warning:  #1295-D: Deprecated declaration getCidHandler - give arg types
-  void getCidHandler();
 ../Inc/main.h(84): warning:  #1295-D: Deprecated declaration getrdpHandler - give arg types
   void getrdpHandler();
 ../Inc/main.h(86): warning:  #1295-D: Deprecated declaration goToAddrHandler - give arg types
@@ -50,13 +46,13 @@ compiling main.c...
   void rdOTPHandler();
 ../Inc/main.h(93): warning:  #1295-D: Deprecated declaration disRWProtectHandler - give arg types
   void disRWProtectHandler();
-../Src/main.c(164): warning:  #513-D: a value of type "void *" cannot be assigned to an entity of type "void (*)(void)"
+../Src/main.c(178): warning:  #513-D: a value of type "void *" cannot be assigned to an entity of type "void (*)(void)"
   	app_reset_handler = (void *)resetHandler;
-../Src/main.c: 12 warnings, 0 errors
+../Src/main.c: 10 warnings, 0 errors
 linking...
-Program Size: Code=8304 RO-data=508 RW-data=24 ZI-data=1288  
+Program Size: Code=8480 RO-data=508 RW-data=36 ZI-data=1292  
 FromELF: creating hex file...
-"bootloader\bootloader.axf" - 0 Error(s), 12 Warning(s).
+"bootloader\bootloader.axf" - 0 Error(s), 10 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -79,7 +75,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.1.2
-Build Time Elapsed:  00:00:03
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

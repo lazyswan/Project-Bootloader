@@ -61,7 +61,19 @@ char msg[]="Message printed over UART2\n";
 #define COMPORT &huart2
 #define BUFFER_LENGTH 200
 uint8_t  rxBuffer[BUFFER_LENGTH];
-
+uint8_t  supportedCommands[]={
+	BL_GET_VER,
+	BL_GET_HELP,
+	BL_GET_CID,
+	BL_GET_RDP_STATUS,
+	BL_GO_TO_ADDR,
+	BL_FLASH_ERASE,
+	BL_MEM_WRITE,
+	BL_EN_RW_PROTECT,
+	BL_MEM_READ,
+	BL_READ_SECTOR_P_STATUS,
+	BL_OTP_READ
+};
 int main(void)
 {
 
@@ -121,8 +133,10 @@ void readFromHost(){
 				getVerHandler(rxBuffer);
 				break;
 			case BL_GET_HELP:
+				getHelpHandler(rxBuffer);
 				break;
 			case BL_GET_CID:
+				getCidHandler(rxBuffer);
 				break;
 			case BL_GET_RDP_STATUS:
 				break;
@@ -213,6 +227,44 @@ void getVerHandler(uint8_t *rxBuffer){
 	}
 	
 }
+void getHelpHandler(uint8_t *rxBuffer){
+	uint8_t pck_length=rxBuffer[0]+1;
+	uint32_t hostCRC=*(uint32_t *)(rxBuffer+pck_length-4);
+	
+	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
+		sendAck(rxBuffer[1],sizeof(supportedCommands));
+		//uint8_t version=VERSION;
+		HAL_UART_Transmit(COMPORT,supportedCommands,sizeof(supportedCommands),HAL_MAX_DELAY);
+	}
+	
+	else{
+		sendNack();		
+	}
+	
+	
+}
+
+void getCidHandler(uint8_t *rxBuffer){
+	uint8_t pck_length=rxBuffer[0]+1;
+	uint32_t hostCRC=*(uint32_t *)(rxBuffer+pck_length-4);
+	
+	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
+		uint16_t cid=(uint16_t)((DBGMCU->IDCODE) & 0X0FFF);
+		sendAck(rxBuffer[1],sizeof(cid));
+		//uint8_t version=VERSION;
+		
+		HAL_UART_Transmit(COMPORT,(uint8_t *)&cid,sizeof(cid),HAL_MAX_DELAY);
+	}
+	
+	else{
+		sendNack();		
+	}
+	
+	
+	
+	
+}
+
 
 
 

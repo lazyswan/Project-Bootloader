@@ -79,8 +79,8 @@ void readFromHost(void);
 void jmpToUserApp(void);
 //Prototype functoins for Bootloader 
 void getVerHandler(uint8_t *rxBuffer);
-void getHelpHandler();
-void getCidHandler();
+void getHelpHandler(uint8_t *rxBuffer);
+void getCidHandler(uint8_t *rxBuffer);
 void getrdpHandler();
 
 void goToAddrHandler();
