@@ -38,7 +38,7 @@
   */
 /* USER CODE END Header */
 
-#include <stdarg.h>
+#include <stdarg.h>//va list 
 #include <string.h>
 #include <stdint.h>
 
@@ -56,6 +56,12 @@ static void MX_CRC_Init(void);
 
 char msg[]="Message printed over UART2\n";
 
+
+//Bootloader
+#define COMPORT &huart2
+#define BUFFER_LENGTH 200
+uint8_t  rxBuffer[BUFFER_LENGTH];
+
 int main(void)
 {
 
@@ -69,34 +75,19 @@ int main(void)
  
   while (1)
   {
-		//HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+		
 		if(HAL_GPIO_ReadPin(B1_GPIO_Port,B1_Pin)==GPIO_PIN_RESET){
-			//HAL_UART_Transmit(&huart2,(uint8_t*)buttonNotPress, sizeof(buttonPress), HAL_MAX_DELAY);
-			//char *buttonPress="BUTTON PRESSED\n";
 			printMsg("Button Pressed\n");
-			delayS(1000);
-			bootloader_read_from_host();
+			delayS(1000);			
+			readFromHost();//Bootloader Function:
 		}
 		else{
-			
-			//char buttonNotPress[]="BUTTON NOT PRESSED\n";
+			jmpToUserApp();//Jumps to User Application
 			printMsg("Button Not Pressed\n");
 			delayS(1000);
-			//HAL_UART_Transmit(&huart2,(uint8_t*)buttonNotPress, sizeof(buttonNotPress), HAL_MAX_DELAY);
-			bootloader_jump_to_user_application();
-			
+				
 		}
     
-/*
-		//	HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
-		HAL_UART_Transmit(&huart2,(uint8_t*)msg, sizeof(msg), HAL_MAX_DELAY);
-		//	DELAY
-		uint32_t currentTick=HAL_GetTick();
-		// BUSY WAITING
-		while(HAL_GetTick()<=currentTick+1000);
-		
-*/
-
   }
  
 }
@@ -117,11 +108,53 @@ void delayS(uint16_t ms){
 		// BUSY WAITING
 			while(HAL_GetTick()<=currentTick+ms);
 }
-void bootloader_read_from_host(void){
+void readFromHost(){
+	uint8_t rcvLength=0;
+	while(1){
+		memset(rxBuffer,0,BUFFER_LENGTH);//Reinitialsed the Buffer for new data;
+		HAL_UART_Receive(COMPORT,rxBuffer,1,HAL_MAX_DELAY);
+		rcvLength=rxBuffer[0];//Length of Bytes to follow:
+		HAL_UART_Receive(COMPORT,&rxBuffer[1],rcvLength,HAL_MAX_DELAY);
+		
+		switch(rxBuffer[1]){
+			case BL_GET_VER:
+				getVerHandler(rxBuffer);
+				break;
+			case BL_GET_HELP:
+				break;
+			case BL_GET_CID:
+				break;
+			case BL_GET_RDP_STATUS:
+				break;
+			case BL_GO_TO_ADDR:
+				break;
+			case BL_FLASH_ERASE:
+				break;
+			case BL_MEM_WRITE:
+				break;
+			case BL_EN_RW_PROTECT:
+				break;
+			case BL_MEM_READ:
+				break;
+			case BL_READ_SECTOR_P_STATUS:
+				break;
+			case BL_OTP_READ:
+				break;
+			case BL_DIS_R_W_PROTECT:
+				break;
+			default:
+				//printMsg("BL:MSG::Invalid Command--\n");
+				break;
+			
+		}
+		
+	}
+	
 	
 }
 
-void bootloader_jump_to_user_application(void){
+//Function Jumps to ResetHandler of User Application @ location 0x0800 8000
+void jmpToUserApp(){
 	void (*app_reset_handler)(void);//pointer to hold the reset handler
 	//first address @ 0x0800_8000 hold MSP
 	uint32_t mspVal= *(volatile uint32_t*)FLASH_SECTOR_ADDRESS;
@@ -133,11 +166,82 @@ void bootloader_jump_to_user_application(void){
 	app_reset_handler();
 	
 }
+//************************Bootloader Command Handlers Definatons: ***************************
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+void sendNack(void){
+	
+	uint8_t nackBit=NACK;
+	HAL_UART_Transmit(COMPORT,&nackBit,1,HAL_MAX_DELAY);
+	
+}
+
+void sendAck(uint8_t cmdCode,uint8_t bytesToFollow){
+	//ACK is TWO Bytes
+	uint8_t ackBuff[2];
+	ackBuff[0]=ACK;
+	ackBuff[1]=bytesToFollow;
+	HAL_UART_Transmit(COMPORT,ackBuff,2,HAL_MAX_DELAY);
+	
+}
+
+uint8_t verifyCRC(uint8_t *pData,uint32_t len,uint32_t crcHost){
+	uint32_t uwCRCValue=0xff;
+	for(uint32_t i=0;i<len;i++){
+		uint32_t data=pData[i];
+		uwCRCValue=HAL_CRC_Accumulate(&hcrc,&data,1);
+	}
+	//RESEET CRC CALCULATOIN UNIT
+	__HAL_CRC_DR_RESET(&hcrc);
+	if(uwCRCValue==crcHost)
+		return CRC_SUCCESS;
+	else return CRC_FAIL;
+}
+void getVerHandler(uint8_t *rxBuffer){
+	//printMsg("BL::Getting Version");
+	uint8_t pck_length=rxBuffer[0]+1;
+	uint32_t hostCRC=*(uint32_t *)(rxBuffer+pck_length-4);
+	
+	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
+		sendAck(rxBuffer[1],1);
+		uint8_t version=VERSION;
+		HAL_UART_Transmit(COMPORT,&version,1,HAL_MAX_DELAY);
+	}
+	
+	else{
+		sendNack();
+		
+	}
+	
+}
+
+
+
+//************************Bootloader Command Handlers Ends ***************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};

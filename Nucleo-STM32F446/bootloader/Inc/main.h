@@ -75,9 +75,29 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-void bootloader_read_from_host(void);
+void readFromHost(void);
+void jmpToUserApp(void);
+//Prototype functoins for Bootloader 
+void getVerHandler(uint8_t *rxBuffer);
+void getHelpHandler();
+void getCidHandler();
+void getrdpHandler();
 
-void bootloader_jump_to_user_application(void);
+void goToAddrHandler();
+void flashEraseHandler();
+void memWrite();
+void enRWProtectHandler();
+void memReadHandler();
+void rdSectorProtectStatusHandler();
+void rdOTPHandler();
+void disRWProtectHandler();
+void sendNack(void);
+void sendAck(uint8_t cmdCode,uint8_t bytesToFollow);
+
+
+
+
+
 void printMsg(char* msg,...);
 void delayS(uint16_t ms);
 /* USER CODE END EFP */
@@ -100,6 +120,57 @@ void delayS(uint16_t ms);
 /* USER CODE BEGIN Private defines */
 #define FLASH_SECTOR_ADDRESS 0x08008000U
 /* USER CODE END Private defines */
+
+
+
+//CRC
+#define CRC_SUCCESS 0
+#define CRC_FAIL    1
+
+//Bootloader commands:
+#define VERSION             0x20
+#define NACK                0X7F
+#define ACK                 0XA5
+
+//#define  <command name >  <command_code>
+
+//This command is used to read the bootloader version from the MCU
+#define BL_GET_VER                0x51
+
+//This command is used to know what are the commands supported by the bootloader
+#define BL_GET_HELP               0x52
+
+//This command is used to read the MCU chip identification number
+#define BL_GET_CID                0x53
+
+//This command is used to read the FLASH Read Protection level.
+#define BL_GET_RDP_STATUS         0x54
+
+//This command is used to jump bootloader to specified address.
+#define BL_GO_TO_ADDR             0x55
+
+//This command is used to mass erase or sector erase of the user flash .
+#define BL_FLASH_ERASE            0x56
+
+//This command is used to write data in to different memories of the MCU
+#define BL_MEM_WRITE              0x57
+
+//This command is used to enable or disable read/write protect on different sectors of the user flash .
+#define BL_EN_RW_PROTECT          0x58
+
+//This command is used to read data from different memories of the microcontroller.
+#define BL_MEM_READ               0x59
+
+//This command is used to read all the sector protection status.
+#define BL_READ_SECTOR_P_STATUS   0x5A
+
+
+//This command is used to read the OTP contents.
+#define BL_OTP_READ               0x5B
+
+
+//This command is used disable all sector read/write protection 
+#define BL_DIS_R_W_PROTECT        0x5C
 
 #ifdef __cplusplus
 }
