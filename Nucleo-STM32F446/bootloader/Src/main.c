@@ -65,15 +65,9 @@ uint8_t  supportedCommands[]={
 	BL_GET_VER,
 	BL_GET_HELP,
 	BL_GET_CID,
-	BL_GET_RDP_STATUS,
-	BL_GO_TO_ADDR,
 	BL_FLASH_ERASE,
 	BL_MEM_WRITE,
-	BL_EN_RW_PROTECT,
-	BL_MEM_READ,
-	BL_READ_SECTOR_P_STATUS,
-	BL_OTP_READ
-};
+	};
 int main(void)
 {
 
@@ -138,23 +132,11 @@ void readFromHost(){
 			case BL_GET_CID:
 				getCidHandler(rxBuffer);
 				break;
-			case BL_GET_RDP_STATUS:
-				break;
-			case BL_GO_TO_ADDR:
-				break;
 			case BL_FLASH_ERASE:
+				flashEraseHandler(rxBuffer);
 				break;
 			case BL_MEM_WRITE:
-				break;
-			case BL_EN_RW_PROTECT:
-				break;
-			case BL_MEM_READ:
-				break;
-			case BL_READ_SECTOR_P_STATUS:
-				break;
-			case BL_OTP_READ:
-				break;
-			case BL_DIS_R_W_PROTECT:
+				memWrite(rxBuffer);
 				break;
 			default:
 				//printMsg("BL:MSG::Invalid Command--\n");
@@ -260,11 +242,80 @@ void getCidHandler(uint8_t *rxBuffer){
 		sendNack();		
 	}
 	
+}
+
+void flashEraseHandler(uint8_t *rxBuffer){
+	/*To Erase the Flash is to Write 0xFF;
+	0xAB->0xCD | not allowed
+	0xAB->0xFF and then 0xFF->0xAB;	
+	*/
+	uint8_t eraseStatus=0x00;
+	uint8_t pck_length=rxBuffer[0]+1;
+	uint32_t hostCRC=*((uint32_t *)(rxBuffer+pck_length-4));
 	
+	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
+		sendAck(rxBuffer[1],1);
+		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,1);
+		eraseStatus=eraseFlash(rxBuffer[2], rxBuffer[3]);
+		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,0);
+		HAL_UART_Transmit(COMPORT,(uint8_t *)&eraseStatus,sizeof(eraseStatus),HAL_MAX_DELAY);
+	}
 	
+	else{
+		sendNack();
+		
+	}	
 	
 }
 
+uint8_t eraseFlash(uint8_t sectorNum, uint8_t numOfSectors){
+	FLASH_EraseInitTypeDef flash_handler;
+	uint32_t sectorError;
+	HAL_StatusTypeDef status;
+	if(numOfSectors>8){
+		return INVALID_SECTOR;
+	}
+	if(sectorNum<=7 || sectorNum == 0xFF ){
+		if(sectorNum==((uint8_t) 0xFF)){
+		flash_handler.TypeErase=FLASH_TYPEERASE_MASSERASE;
+		}		
+		else{
+			uint8_t remainingSector=8-sectorNum;
+			if(numOfSectors>remainingSector){
+				numOfSectors=remainingSector;
+			}
+			flash_handler.TypeErase=FLASH_TYPEERASE_SECTORS;
+			flash_handler.Sector=sectorNum;
+			flash_handler.NbSectors=numOfSectors;
+		}
+			flash_handler.Banks=FLASH_BANK_1;
+			HAL_FLASH_Unlock();
+			flash_handler.VoltageRange=FLASH_VOLTAGE_RANGE_3;
+			status=(uint8_t)HAL_FLASHEx_Erase(&flash_handler,&sectorError);			
+			HAL_FLASH_Lock();
+			return status;		
+		
+	}
+	//flash_handler.
+	
+	
+}
+void memWrite(uint8_t *rxBuffer){
+	uint8_t pck_length=rxBuffer[0]+1;
+	uint32_t hostCRC=*(uint32_t *)(rxBuffer+pck_length-4);
+	
+	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
+		sendAck(rxBuffer[1],sizeof(supportedCommands));
+		//uint8_t version=VERSION;
+		HAL_UART_Transmit(COMPORT,supportedCommands,sizeof(supportedCommands),HAL_MAX_DELAY);
+	}
+	
+	else{
+		sendNack();		
+	}
+	
+	
+}
 
 
 
