@@ -136,7 +136,7 @@ void readFromHost(){
 				flashEraseHandler(rxBuffer);
 				break;
 			case BL_MEM_WRITE:
-				memWrite(rxBuffer);
+				memWriteHandler(rxBuffer);
 				break;
 			default:
 				//printMsg("BL:MSG::Invalid Command--\n");
@@ -255,9 +255,9 @@ void flashEraseHandler(uint8_t *rxBuffer){
 	
 	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
 		sendAck(rxBuffer[1],1);
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,1);
+		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
 		eraseStatus=eraseFlash(rxBuffer[2], rxBuffer[3]);
-		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,0);
+		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
 		HAL_UART_Transmit(COMPORT,(uint8_t *)&eraseStatus,sizeof(eraseStatus),HAL_MAX_DELAY);
 	}
 	
@@ -271,7 +271,7 @@ void flashEraseHandler(uint8_t *rxBuffer){
 uint8_t eraseFlash(uint8_t sectorNum, uint8_t numOfSectors){
 	FLASH_EraseInitTypeDef flash_handler;
 	uint32_t sectorError;
-	HAL_StatusTypeDef status;
+	HAL_StatusTypeDef status=HAL_ERROR;
 	if(numOfSectors>8){
 		return INVALID_SECTOR;
 	}
@@ -293,31 +293,86 @@ uint8_t eraseFlash(uint8_t sectorNum, uint8_t numOfSectors){
 			flash_handler.VoltageRange=FLASH_VOLTAGE_RANGE_3;
 			status=(uint8_t)HAL_FLASHEx_Erase(&flash_handler,&sectorError);			
 			HAL_FLASH_Lock();
-			return status;		
+					
 		
 	}
+	return status;
 	//flash_handler.
 	
 	
 }
-void memWrite(uint8_t *rxBuffer){
-	uint8_t pck_length=rxBuffer[0]+1;
-	uint32_t hostCRC=*(uint32_t *)(rxBuffer+pck_length-4);
-	
-	if(!verifyCRC(&rxBuffer[0],pck_length-4,hostCRC)){
-		sendAck(rxBuffer[1],sizeof(supportedCommands));
-		//uint8_t version=VERSION;
-		HAL_UART_Transmit(COMPORT,supportedCommands,sizeof(supportedCommands),HAL_MAX_DELAY);
+void memWriteHandler(uint8_t *prxBuffer){
+	//uint8_t addr_valid = ADDR_VALID;
+	uint8_t write_status = 0x00;
+	uint8_t chksum =0, len=0;
+	len = prxBuffer[0];
+	uint8_t payload_len = prxBuffer[6];
+
+	uint32_t mem_address = *((uint32_t *) ( &prxBuffer[2]) );
+
+	chksum = prxBuffer[len];
+
+   // printmsg("BL_DEBUG_MSG:bootloader_handle_mem_write_cmd\n");
+
+    //Total length of the command packet
+	uint32_t command_packet_len = rxBuffer[0]+1 ;
+
+	//extract the CRC32 sent by the Host
+	uint32_t host_crc = *((uint32_t * ) (rxBuffer+command_packet_len - 4) ) ;
+
+
+	if (! verifyCRC(&rxBuffer[0],command_packet_len-4,host_crc))
+	{
+        //printmsg("BL_DEBUG_MSG:checksum success !!\n");
+
+        sendAck(prxBuffer[0],1);
+
+       // printmsg("BL_DEBUG_MSG: mem write address : %#x\n",mem_address);
+
+
+            //printmsg("BL_DEBUG_MSG: valid mem write address\n");
+
+            //glow the led to indicate bootloader is currently writing to memory
+            HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+
+            //execute mem write
+            write_status = memWrite(&prxBuffer[7],mem_address, payload_len);
+
+            //turn off the led to indicate memory write is over
+            HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+
+            //inform host about the status
+            //bootloader_uart_write_data(&write_status,1);
+		HAL_UART_Transmit(COMPORT,(uint8_t *)&write_status,sizeof(write_status),HAL_MAX_DELAY);
+
+		
+
+
+	}else
+	{
+        //printmsg("BL_DEBUG_MSG:checksum fail !!\n");
+        sendNack();
 	}
-	
-	else{
-		sendNack();		
-	}
-	
-	
+
 }
 
+uint8_t memWrite(uint8_t *pBuffer, uint32_t mem_address, uint32_t len)
+{
+    uint8_t status=HAL_OK;
 
+    //We have to unlock flash module to get control of registers
+    HAL_FLASH_Unlock();
+
+    for(uint32_t i = 0 ; i <len ; i++)
+    {
+        //Here we program the flash byte by byte
+        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE,mem_address+i,pBuffer[i] );
+    }
+
+    HAL_FLASH_Lock();
+
+    return status;
+}
 
 //************************Bootloader Command Handlers Ends ***************************
 

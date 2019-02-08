@@ -82,11 +82,11 @@ void getVerHandler(uint8_t *rxBuffer);
 void getHelpHandler(uint8_t *rxBuffer);
 void getCidHandler(uint8_t *rxBuffer);
 void flashEraseHandler(uint8_t *rxBuffer);
-void memWrite();
+void memWriteHandler(uint8_t *rxBuffer);
 void sendNack(void);
 void sendAck(uint8_t cmdCode,uint8_t bytesToFollow);
 uint8_t eraseFlash(uint8_t sectorNum, uint8_t numOfSectors);
-
+uint8_t memWrite(uint8_t *pBuffer, uint32_t mem_address, uint32_t len);
 
 
 

@@ -23,7 +23,8 @@ COMMAND_BL_GET_HELP_LEN                             = 6
 COMMAND_BL_GET_CID_LEN                              = 6
 COMMAND_BL_FLASH_ERASE_LEN                          = 8
 COMMAND_BL_MEM_WRITE_LEN                            = 11
-
+#Adrdress To Write
+FLASH_SECTOR2_BASE_ADDRESS                          =0x08008000
 
 verbose_mode = 1
 mem_write_active =0
@@ -313,8 +314,8 @@ def decode_menu_command_code(command):
 
         bytes_remaining = t_len_of_file - bytes_so_far_sent
 
-        base_mem_address = input("\n   Enter the memory write address here :")
-        base_mem_address = int(base_mem_address, 16)
+       # base_mem_address = input("\n   Enter the memory write address here :")
+        base_mem_address = FLASH_SECTOR2_BASE_ADDRESS   #int(base_mem_address, 16)
         global mem_write_active
         while(bytes_remaining):
             mem_write_active=1
@@ -441,10 +442,10 @@ if(ret < 0):
     
   
 while True:
-    print("\n +==========================================+")
-    print(" |               Menu                       |")
-    print(" |         STM32F4 BootLoader v1            |")
-    print(" +==========================================+")
+    print("\n+******************************************+")
+    print(" |                                          |")
+    print(" |           STM32F4 Bootloader             |")
+    print(" +******************************************+")
 
   
     
