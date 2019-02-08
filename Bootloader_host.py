@@ -442,20 +442,21 @@ if(ret < 0):
     
   
 while True:
-    print("\n+******************************************+")
-    print(" |                                          |")
-    print(" |           STM32F4 Bootloader             |")
-    print(" +******************************************+")
+    print("\n")
+    print("+**********************************************+")
+    print("  |                                          |")
+    print("  |           STM32F4 Bootloader             |")
+    print("+**********************************************+")
 
   
     
-    print("\n   Which BL command do you want to send ??\n")
-    print("   BL_GET_VER                            --> 1")
-    print("   BL_GET_HLP                            --> 2")
-    print("   BL_GET_CID                            --> 3")
-    print("   BL_FLASH_MASS_ERASE                   --> 4")
-    print("   BL_MEM_WRITE                          --> 5")
-    print("   MENU_EXIT                             --> 0")
+    print("\n SELECT OPTION:\n")
+    print("   GET_VER                            --> 1")
+    print("   GET_HLP                            --> 2")
+    print("   GET_CID                            --> 3")
+    print("   FLASH_MASS_ERASE                   --> 4")
+    print("   MEM_WRITE                          --> 5")
+    print("   MENU_EXIT                          --> 0")
 
     command_code = input("\n   Type the command code here :")
 
